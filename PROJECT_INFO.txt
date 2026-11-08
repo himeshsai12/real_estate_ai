@@ -1,0 +1,140 @@
+ESTATESPHERE - PROJECT INFORMATION
+==================================
+
+OVERVIEW
+--------
+EstateSphere is a sample real-estate discovery and advisor web application.
+It serves a browser-based property explorer, map, property details, favorites,
+tour scheduling, and three advisor capabilities:
+
+  Aria   - natural-language property search and conversational guidance
+  Apex   - comparable-property valuation and investment calculations
+  Atlas  - tour booking, conflict checking, and calendar invite generation
+
+The included listings are sample data stored locally in SQLite. The application
+does not connect to a live MLS, verify that homes are on the market, or provide
+professional financial, legal, or real-estate advice.
+
+TECHNOLOGY AND DEPENDENCIES
+---------------------------
+- Python standard library for the HTTP server, SQLite database, JSON handling,
+  URL parsing, and HTTP requests.
+- SQLite database at data/estate_sphere.db.
+- Browser UI in public/index.html, public/app.js, and public/style.css.
+- Leaflet, Tailwind CSS, Lucide, and Chart.js are loaded from public CDNs.
+  The page therefore needs internet access to load those libraries and remote
+  property images.
+- General-purpose AI chat needs a Gemini API key and internet access.
+- requirements.txt is intentionally limited to a comment: no third-party
+  Python packages are currently needed.
+
+HOW TO RUN
+----------
+On Windows, double-click run.bat, or open a terminal in the project folder and
+run:
+
+    python server.py 8000
+
+Then open:
+
+    http://localhost:8000
+
+The port can be changed by passing another number, for example:
+
+    python server.py 8080
+
+If the database needs to be initialized or reseeded, run:
+
+    python data/seed_data.py
+
+Warning: the seeder deletes and recreates the property rows. Back up the
+database first if you need to preserve local data. Tour and favorite records
+are stored in the same SQLite database.
+
+HOW A REQUEST WORKS
+-------------------
+1. The browser loads the static UI from public/.
+2. The browser calls the JSON endpoints served by server.py.
+3. The server routes property, favorite, tour, and advisor requests to the
+   corresponding code in agents.py, rag_engine.py, and reasoning_engine.py.
+4. Property, favorite, and tour data are read from or written to SQLite.
+5. JSON results are returned to the browser, which renders cards, map pins,
+   advisor responses, and booking actions.
+
+CHAT AND PROPERTY SEARCH
+------------------------
+The chat UI sends a message and recent conversation turns to
+POST /api/agents/rag. AdvisorReasoningEngine first handles greetings,
+self-introductions, and other simple conversational messages without property
+results. For searches, it retrieves relevant property text from RAGEngine.
+RAGEngine builds an in-memory TF-IDF / keyword index from property records; it
+does not use a trained embedding model. SearchAgent parses common criteria
+such as city, property type, maximum price, bedrooms, and amenity keywords.
+Explicitly parsed filters are applied to the retrieved properties so unrelated
+homes are not recommended. Follow-up questions can use the preceding user
+message as search context.
+
+To enable general-purpose Aria chat:
+
+1. Copy .env.example to .env in the project root.
+2. Set GEMINI_API_KEY to a key from https://aistudio.google.com/apikey.
+3. Optionally set GEMINI_MODEL; its default is gemini-3.8-flash.
+4. Restart the server so it loads the new configuration.
+
+The key stays on the server and is not sent to the browser. Keep .env private;
+it is excluded by .gitignore. When configured, Aria sends the recent
+conversation to Gemini's generateContent API. Real-estate requests can include
+retrieved property facts; ordinary conversation does not get unrelated listing
+context. If Gemini is not configured, the application only offers basic
+hand-written replies and local catalog search. LLM answers are generated at
+request time; this project does not train or fine-tune a language model.
+
+OTHER AGENTS
+------------
+- Apex: ValuationAgent in agents.py compares a listing with local portfolio
+  comps and calculates estimated value, deal metrics, rental yield, and related
+  financial indicators. These are sample-model estimates, not appraisals.
+- Atlas: SchedulingAgent validates required booking fields, checks for an
+  existing booking for the same property/date/time, saves the booking, and
+  serves an .ics calendar file.
+- SearchAgent: parses search criteria and ranks portfolio matches.
+
+IMPORTANT FILES
+--------------
+server.py                  HTTP server and REST API routes
+agents.py                  Search, valuation, and scheduling logic
+reasoning_engine.py        Chat intent handling and advisor responses
+rag_engine.py              Local property text indexing and retrieval
+data/seed_data.py          SQLite schema and sample property records
+data/estate_sphere.db      Local property, tour, and favorite database
+public/index.html          Main browser page
+public/app.js              Browser behavior and API requests
+public/style.css           Application styling
+run.bat / run.ps1          Windows startup scripts
+README.md                  Feature overview and endpoint summary
+requirements.txt           Python package requirements (none currently)
+
+API OVERVIEW
+------------
+GET  /api/properties              List and filter properties
+GET  /api/properties/<id>         Property details and nearby comps
+GET  /api/stats                   Portfolio statistics
+GET  /api/tours                   Scheduled tours
+GET  /api/tour/ics/<id>           Download a tour calendar file
+POST /api/agents/rag              Conversational Aria advisor
+POST /api/agents/search           Aria advisor endpoint
+POST /api/agents/valuation        Apex valuation
+POST /api/agents/schedule         Atlas tour booking
+POST /api/favorites/toggle        Toggle a property's favorite status
+
+For POST requests, send a JSON body. Advisor requests use "query" and may
+include a "history" array. Valuation and scheduling requests accept the
+property and booking fields used by the browser UI.
+
+DEVELOPMENT AND DEPLOYMENT NOTES
+-------------------------------
+This is a local/demo application, not a production-hardened service. The
+server enables permissive CORS and has no authentication or authorization.
+Do not expose it directly to the public internet or enter sensitive buyer
+information without adding appropriate security, privacy, and operational
+controls.

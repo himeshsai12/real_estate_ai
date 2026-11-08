@@ -19,14 +19,14 @@ TECHNOLOGY AND DEPENDENCIES
 ---------------------------
 - Python standard library for the HTTP server, SQLite database, JSON handling,
   URL parsing, and HTTP requests.
+- Streamlit and pandas for the optional Streamlit deployment interface in app.py.
 - SQLite database at data/estate_sphere.db.
-- Browser UI in public/index.html, public/app.js, and public/style.css.
+- Original browser UI in public/index.html, public/app.js, and public/style.css.
 - Leaflet, Tailwind CSS, Lucide, and Chart.js are loaded from public CDNs.
   The page therefore needs internet access to load those libraries and remote
   property images.
 - General-purpose AI chat needs a Gemini API key and internet access.
-- requirements.txt is intentionally limited to a comment: no third-party
-  Python packages are currently needed.
+- requirements.txt installs Streamlit for the Streamlit deployment interface.
 
 HOW TO RUN
 ----------
@@ -38,6 +38,16 @@ run:
 Then open:
 
     http://localhost:8000
+
+To run the Streamlit interface locally, install the requirements and start
+the app:
+
+    python -m pip install -r requirements.txt
+    python -m streamlit run app.py
+
+For Streamlit Community Cloud, select app.py as the main file. Add
+GEMINI_API_KEY under the app's Settings > Secrets to enable general-purpose
+Aria chat; do not commit API keys to the repository.
 
 The port can be changed by passing another number, for example:
 
@@ -85,9 +95,9 @@ The key stays on the server and is not sent to the browser. Keep .env private;
 it is excluded by .gitignore. When configured, Aria sends the recent
 conversation to Gemini's generateContent API. Real-estate requests can include
 retrieved property facts; ordinary conversation does not get unrelated listing
-context. If Gemini is not configured, the application only offers basic
-hand-written replies and local catalog search. LLM answers are generated at
-request time; this project does not train or fine-tune a language model.
+context. If Gemini is not configured, open-ended chat is unavailable but
+local catalog search continues to work. LLM answers are generated at request
+time; this project does not train or fine-tune a language model.
 
 OTHER AGENTS
 ------------
@@ -102,6 +112,7 @@ OTHER AGENTS
 IMPORTANT FILES
 --------------
 server.py                  HTTP server and REST API routes
+app.py                      Streamlit deployment entry point and UI
 agents.py                  Search, valuation, and scheduling logic
 reasoning_engine.py        Chat intent handling and advisor responses
 rag_engine.py              Local property text indexing and retrieval
@@ -112,7 +123,7 @@ public/app.js              Browser behavior and API requests
 public/style.css           Application styling
 run.bat / run.ps1          Windows startup scripts
 README.md                  Feature overview and endpoint summary
-requirements.txt           Python package requirements (none currently)
+requirements.txt           Streamlit deployment dependency
 
 API OVERVIEW
 ------------

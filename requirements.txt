@@ -1,1 +1,2 @@
-# EstateSphere uses only Python's standard library. No pip packages are required.
+# Streamlit is used by app.py; the original server.py needs no pip packages.
+streamlit>=1.40,<2
